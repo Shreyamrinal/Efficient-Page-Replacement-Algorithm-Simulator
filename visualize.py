@@ -22,3 +22,24 @@ annot = ax.annotate("", xy=(0,0), xytext=(10,10), textcoords="offset points",
                     arrowprops=dict(arrowstyle="wedge,tail_width=0.5", facecolor="black"))
 
 annot.set_visible(False)  
+def update_annot(bar):
+    x = bar.get_x() + bar.get_width() / 2
+    y = bar.get_height()
+    annot.xy = (x, y)
+    annot.set_text(f"{int(y)}") 
+    annot.set_visible(True)
+
+def on_hover(event):
+    vis = annot.get_visible()
+    for bar in bars:
+        if bar.contains(event)[0]:  
+            update_annot(bar)
+            fig.canvas.draw_idle()
+            return
+    if vis:
+        annot.set_visible(False)
+        fig.canvas.draw_idle()
+
+fig.canvas.mpl_connect("motion_notify_event", on_hover)
+
+plt.show()
