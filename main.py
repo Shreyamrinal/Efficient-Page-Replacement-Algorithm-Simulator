@@ -56,6 +56,46 @@ class PageReplacementSimulator:
                 page_faults += 1
             steps.append((current, page, page_faults))
         return steps, page_faults
+    def lru_algorithm(self, pages, frame_size):
+        frames = []
+        page_faults = 0
+        steps = []
+        recent = []
+        
+        for page in pages:
+            current = frames.copy()
+            if page not in frames:
+                if len(frames) < frame_size:
+                    frames.append(page)
+                    recent.append(page)
+                else:
+                    lru_page = recent.pop(0)
+                    frames[frames.index(lru_page)] = page
+                    recent.append(page)
+                page_faults += 1
+            else:
+                recent.remove(page)
+                recent.append(page)
+            steps.append((current, page, page_faults))
+        return steps, page_faults
+    def optimal_algorithm(self, pages, frame_size):
+        frames = []
+        page_faults = 0
+        steps = []
+        
+        for i, page in enumerate(pages):
+            current = frames.copy()
+            if page not in frames:
+                if len(frames) < frame_size:
+                    frames.append(page)
+                else:
+                    future = pages[i+1:]
+                    replace_idx = self.find_optimal_replace(frames, future)
+                    frames[replace_idx] = page
+                page_faults += 1
+            steps.append((current, page, page_faults))
+        return steps, page_faults
+    
 
 if __name__ == "__main__":
     root = tk.Tk()
