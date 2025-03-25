@@ -95,7 +95,14 @@ class PageReplacementSimulator:
                 page_faults += 1
             steps.append((current, page, page_faults))
         return steps, page_faults
-    
+    def find_optimal_replace(self, frames, future):
+        distances = []
+        for frame in frames:
+            try:
+                distances.append(future.index(frame))
+            except ValueError:
+                return frames.index(frame)
+        return np.argmax(distances)    
 
 if __name__ == "__main__":
     root = tk.Tk()
