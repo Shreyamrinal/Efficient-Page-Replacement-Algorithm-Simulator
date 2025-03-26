@@ -102,7 +102,62 @@ class PageReplacementSimulator:
                 distances.append(future.index(frame))
             except ValueError:
                 return frames.index(frame)
-        return np.argmax(distances)    
+        return np.argmax(distances)
+    def create_visualization(self, algo, steps, total_faults, pages, frame_size):
+        for widget in self.tabs[algo].winfo_children():
+            widget.destroy()
+        
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 7), height_ratios=[1, 1])   
+        states = np.zeros((frame_size, len(pages)))
+        for i, (current, page, _) in enumerate(steps):
+            for j in range(min(frame_size, len(current))):
+                states[j, i] = current[j] if current[j] else 0
+        
+        cax = ax1.matshow(states, cmap='viridis')
+        fig.colorbar(cax, ax=ax1)
+        ax1.set_title(f"{algo} - Memory States")
+        ax1.set_xlabel("Reference Number")
+        ax1.set_ylabel("Frame Number")
+        
+        faults = [step[2] for step in steps]
+        ax2.plot(faults, 'r.-', label='Page Faults')
+        ax2.set_xlabel("Reference Number")
+        ax2.set_ylabel("Fault Count")
+        ax2.legend()
+        
+        hit_ratio = 1 - (total_faults / len(pages))
+        miss_ratio = 1 - hit_ratio
+        metrics_text = (f"Hit Ratio: {hit_ratio:.2%}\n"
+                       f"Miss Ratio: {miss_ratio:.2%}\n"
+                       f"Total Faults: {total_faults}")
+        ax2.text(0.02, 0.98, metrics_text, transform=ax2.transAxes, 
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        plt.tight_layout(pad=3.0)
+        canvas = FigureCanvasTkAgg(fig, master=self.tabs[algo])
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+
+    def run_simulation(self):
+        try:
+            pages = [int(x.strip()) for x in self.page_entry.get().split(',')]
+            frame_size = int(self.frame_size.get())
+            
+            if frame_size <= 0 or not pages:
+                raise ValueError("Invalid input")
+            
+            fifo_steps, fifo_faults = self.fifo_algorithm(pages, frame_size)
+            lru_steps, lru_faults = self.lru_algorithm(pages, frame_size)
+            opt_steps, opt_faults = self.optimal_algorithm(pages, frame_size)
+            
+            self.create_visualization("FIFO", fifo_steps, fifo_faults, pages, frame_size)
+            self.create_visualization("LRU", lru_steps, lru_faults, pages, frame_size)
+            self.create_visualization("Optimal", opt_steps, opt_faults, pages, frame_size)
+            
+        except ValueError as e:
+            messagebox.showerror("Error", f"Invalid input: {str(e)}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {str(e)}")        
 
 if __name__ == "__main__":
     root = tk.Tk()
